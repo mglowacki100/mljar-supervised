@@ -21,24 +21,21 @@ def get_binary_score(X_train, y_train, X_test, y_test):
     clf = DecisionTreeClassifier(max_depth=3)
     clf.fit(X_train, y_train)
     pred = clf.predict_proba(X_test)[:, 1]
-    ll = log_loss(y_test, pred)
-    return ll
+    return log_loss(y_test, pred)
 
 
 def get_regression_score(X_train, y_train, X_test, y_test):
     clf = DecisionTreeRegressor(max_depth=3)
     clf.fit(X_train, y_train)
     pred = clf.predict(X_test)
-    ll = mean_squared_error(y_test, pred)
-    return ll
+    return mean_squared_error(y_test, pred)
 
 
 def get_multiclass_score(X_train, y_train, X_test, y_test):
     clf = DecisionTreeClassifier(max_depth=3)
     clf.fit(X_train, y_train)
     pred = clf.predict_proba(X_test)
-    ll = log_loss(y_test, pred)
-    return ll
+    return log_loss(y_test, pred)
 
 
 def get_score(item):
@@ -113,7 +110,6 @@ class GoldenFeaturesTransformer(object):
             raise AutoMLException(
                 "Golden Features not created due to error (please check errors.md)."
             )
-            return
         if X.shape[1] == 0:
             self._error = f"Golden Features not created. No continous features. Input data shape: {X.shape}, {y.shape}"
             self.save(self._result_file)
@@ -128,8 +124,8 @@ class GoldenFeaturesTransformer(object):
 
         X_train, X_test, y_train, y_test = self._subsample(X, y)
 
-        for i in range(len(items)):
-            items[i] += (X_train, y_train, X_test, y_test, self._scorer)
+        for item in items:
+            item += (X_train, y_train, X_test, y_test, self._scorer)
 
         scores = []
         # parallel version
@@ -220,20 +216,20 @@ class GoldenFeaturesTransformer(object):
 
     def _subsample(self, X, y):
 
-        MAX_SIZE = 5000
-        TRAIN_SIZE = 2500
-
         shuffle = True
         stratify = None
 
+        if self._ml_task != REGRESSION:
+            stratify = y
         if X.shape[0] > 5000:
-            if self._ml_task != REGRESSION:
-                stratify = y
+            MAX_SIZE = 5000
             X_train, _, y_train, _ = train_test_split(
                 X, y, train_size=MAX_SIZE, shuffle=shuffle, stratify=stratify
             )
             if self._ml_task != REGRESSION:
                 stratify = y_train
+
+            TRAIN_SIZE = 2500
 
             X_train, X_test, y_train, y_test = train_test_split(
                 X_train,
@@ -243,8 +239,6 @@ class GoldenFeaturesTransformer(object):
                 stratify=stratify,
             )
         else:
-            if self._ml_task != REGRESSION:
-                stratify = y
             train_size = X.shape[0] // 2
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, train_size=train_size, shuffle=shuffle, stratify=stratify

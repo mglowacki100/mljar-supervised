@@ -21,8 +21,7 @@ def logloss(y_true, y_predicted):
     epsilon = 1e-6
     y_predicted = sp.maximum(epsilon, y_predicted)
     y_predicted = sp.minimum(1 - epsilon, y_predicted)
-    ll = log_loss(y_true, y_predicted)
-    return ll
+    return log_loss(y_true, y_predicted)
 
 
 def rmse(y_true, y_predicted):

@@ -52,13 +52,11 @@ class LabelBinarizer(object):
         self._uniq_values = [
             i if type(i) != np.bool_ else bool(i) for i in list(self._uniq_values)
         ]
-        data_json = {
+        return {
             "new_columns": list(self._new_columns),
             "unique_values": self._uniq_values,
             "old_column": self._old_column,
         }
-
-        return data_json
 
     def from_json(self, data_json):
         self._new_columns = data_json.get("new_columns", None)

@@ -44,14 +44,13 @@ class TextTransformer(object):
         for k in self._vectorizer.vocabulary_.keys():
             self._vectorizer.vocabulary_[k] = int(self._vectorizer.vocabulary_[k])
 
-        data_json = {
+        return {
             "new_columns": list(self._new_columns),
             "old_column": self._old_column,
             "vocabulary": self._vectorizer.vocabulary_,
             "fixed_vocabulary": self._vectorizer.fixed_vocabulary_,
             "idf": list(self._vectorizer.idf_),
         }
-        return data_json
 
     def from_json(self, data_json):
         self._new_columns = data_json.get("new_columns", None)

@@ -80,11 +80,10 @@ class PreprocessingCategorical(object):
     def to_json(self):
         if len(self._convert_params) == 0:
             return {}
-        params = {
+        return {
             "convert_method": self._convert_method,
             "convert_params": self._convert_params,
         }
-        return params
 
     def from_json(self, params):
         if params is not None:

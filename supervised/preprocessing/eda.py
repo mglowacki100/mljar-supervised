@@ -49,8 +49,7 @@ class EDA:
     @staticmethod
     def plot_path(eda_path, column):
         """ Returns full path for the plot based on the column name. """
-        fname = os.path.join(eda_path, EDA.plot_fname(column))
-        return fname
+        return os.path.join(eda_path, EDA.plot_fname(column))
 
     @staticmethod
     def compute(X, y, eda_path):
@@ -183,12 +182,11 @@ class EDA:
                 f"AutoML EDA column limit exceeded! running for first {MAXCOL} columns"
             )
 
-        if save_path:
-            if not os.path.exists(save_path):
-                os.mkdir(save_path)
-        else:
+        if not save_path:
             raise ValueError("Please provide a valid path to save the Extensive EDA")
 
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
         plt.style.use("ggplot")
         try:
 

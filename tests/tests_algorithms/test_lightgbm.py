@@ -42,7 +42,7 @@ class LightgbmAlgorithmTest(unittest.TestCase):
     def test_reproduce_fit(self):
         metric = Metric({"name": "logloss"})
         prev_loss = None
-        for i in range(3):
+        for _ in range(3):
             model = LightgbmAlgorithm(self.params)
             model.fit(self.X, self.y)
             y_predicted = model.predict(self.X)

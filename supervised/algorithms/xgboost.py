@@ -125,8 +125,7 @@ class XgbAlgorithm(BaseAlgorithm):
             raise XgbAlgorithmException("Xgboost model is None")
 
         dtrain = xgb.DMatrix(X, missing=np.NaN)
-        a = self.model.predict(dtrain, ntree_limit=self.best_ntree_limit)
-        return a
+        return self.model.predict(dtrain, ntree_limit=self.best_ntree_limit)
 
     def copy(self):
         return copy.deepcopy(self)

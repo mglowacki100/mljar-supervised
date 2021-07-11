@@ -23,10 +23,7 @@ class LabelEncoder(object):
         return self.lbl.inverse_transform(list(x.values))
 
     def to_json(self):
-        data_json = {}
-        for i, cl in enumerate(self.lbl.classes_):
-            data_json[str(cl)] = i
-        return data_json
+        return {str(cl): i for i, cl in enumerate(self.lbl.classes_)}
 
     def from_json(self, data_json):
         keys = np.unique(list(data_json.keys()))

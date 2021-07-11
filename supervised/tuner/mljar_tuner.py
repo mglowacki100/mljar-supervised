@@ -118,11 +118,7 @@ class MljarTuner:
             return self.get_params_stack_models(stacked_models)
         elif step == "ensemble_stacked":
 
-            # do we have stacked models?
-            any_stacked = False
-            for m in models:
-                if m._is_stacked:
-                    any_stacked = True
+            any_stacked = any(m._is_stacked for m in models)
             if not any_stacked:
                 return []
 
@@ -224,12 +220,10 @@ class MljarTuner:
             self._ml_task, model_type
         )
 
-        if max_rows_limit is not None:
-            if self._data_info["rows"] > max_rows_limit:
-                return True
-        if max_cols_limit is not None:
-            if self._data_info["cols"] > max_cols_limit:
-                return True
+        if max_rows_limit is not None and self._data_info["rows"] > max_rows_limit:
+            return True
+        if max_cols_limit is not None and self._data_info["cols"] > max_cols_limit:
+            return True
 
         return False
 

@@ -90,7 +90,7 @@ class SklearnTreesEnsembleClassifierAlgorithm(SklearnAlgorithm):
         p_tr, p_vd = None, None
         result = {"iteration": [], "train": [], "validation": []}
 
-        for i in range(max_steps):
+        for _ in range(max_steps):
 
             self.model.fit(X, np.ravel(y))
             self.model.n_estimators += self.trees_in_step

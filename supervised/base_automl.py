@@ -100,13 +100,13 @@ class BaseAutoML(BaseEstimator, ABC):
 
     def _check_can_load(self):
         """ Checks if AutoML can be loaded from a folder"""
-        if self.results_path is not None:
-            # Dir exists and can be loaded
-            if os.path.exists(self.results_path) and os.path.exists(
-                os.path.join(self.results_path, "params.json")
-            ):
-                self.load(self.results_path)
-                self._results_path = self.results_path
+        if (
+            self.results_path is not None
+            and os.path.exists(self.results_path)
+            and os.path.exists(os.path.join(self.results_path, "params.json"))
+        ):
+            self.load(self.results_path)
+            self._results_path = self.results_path
 
     def load(self, path):
         logger.info("Loading AutoML models ...")
@@ -484,10 +484,12 @@ class BaseAutoML(BaseEstimator, ABC):
         if step is not None and generated_params is not None:
             self._all_params[step] = generated_params
 
-        state = {}
+        state = {
+            "fit_level": self._fit_level,
+            "time_controller": self._time_ctrl.to_json(),
+        }
 
-        state["fit_level"] = self._fit_level
-        state["time_controller"] = self._time_ctrl.to_json()
+
         state["all_params"] = self._all_params
 
         fname = os.path.join(self._results_path, "progress.json")
@@ -744,8 +746,10 @@ class BaseAutoML(BaseEstimator, ABC):
     def select_and_save_best(self):
         # Select best model based on the lowest loss
         self._best_model = min(
-            [m for m in self._models if m.is_valid()], key=lambda x: x.get_final_loss()
+            (m for m in self._models if m.is_valid()),
+            key=lambda x: x.get_final_loss(),
         )
+
 
         with open(os.path.join(self._results_path, "best_model.txt"), "w") as fout:
             fout.write(f"{self._best_model.get_name()}")
@@ -846,7 +850,6 @@ class BaseAutoML(BaseEstimator, ABC):
             predictions["label"] = predictions["label"].map(
                 {True: pos_label, False: neg_label}
             )
-            return predictions
         elif self._ml_task == MULTICLASS_CLASSIFICATION:
             target_is_numeric = self._data_info.get("target_is_numeric", False)
             if target_is_numeric:
@@ -854,10 +857,7 @@ class BaseAutoML(BaseEstimator, ABC):
                     predictions["label"] = predictions["label"].astype(np.int32)
                 except Exception as e:
                     predictions["label"] = predictions["label"].astype(np.float)
-            return predictions
-        # Regression
-        else:
-            return predictions
+        return predictions
 
     def _predict(self, X):
 
@@ -909,19 +909,19 @@ class BaseAutoML(BaseEstimator, ABC):
     def _get_ml_task(self):
         """ Gets the current ml_task. If "auto" it is determined"""
         self._validate_ml_task()
-        if self.ml_task == "auto":
-            classes_number = self.n_classes
-            if classes_number == 2:
-                self._estimator_type = "classifier"  # for sk-learn api
-                return BINARY_CLASSIFICATION
-            elif classes_number <= 20:
-                self._estimator_type = "classifier"  # for sk-learn api
-                return MULTICLASS_CLASSIFICATION
-            else:
-                self._estimator_type = "regressor"  # for sk-learn api
-                return REGRESSION
-        else:
+        if self.ml_task != "auto":
             return deepcopy(self.ml_task)
+
+        classes_number = self.n_classes
+        if classes_number == 2:
+            self._estimator_type = "classifier"  # for sk-learn api
+            return BINARY_CLASSIFICATION
+        elif classes_number <= 20:
+            self._estimator_type = "classifier"  # for sk-learn api
+            return MULTICLASS_CLASSIFICATION
+        else:
+            self._estimator_type = "regressor"  # for sk-learn api
+            return REGRESSION
 
     def _get_results_path(self):
         """ Gets the current results_path"""
@@ -976,39 +976,39 @@ class BaseAutoML(BaseEstimator, ABC):
     def _get_algorithms(self):
         """ Gets the current algorithms. If "auto" it is determined"""
         self._validate_algorithms()
-        if self.algorithms == "auto":
-            if self._get_mode() == "Explain":
-                return [
-                    "Baseline",
-                    "Linear",
-                    "Decision Tree",
-                    "Random Forest",
-                    "Xgboost",
-                    "Neural Network",
-                ]
-            if self._get_mode() == "Perform":
-                return [
-                    "Linear",
-                    "Random Forest",
-                    "LightGBM",
-                    "Xgboost",
-                    "CatBoost",
-                    "Neural Network",
-                ]
-            if self._get_mode() == "Compete":
-                return [
-                    "Linear",
-                    "Decision Tree",
-                    "Random Forest",
-                    "Extra Trees",
-                    "LightGBM",
-                    "Xgboost",
-                    "CatBoost",
-                    "Neural Network",
-                    "Nearest Neighbors",
-                ]
-        else:
+        if self.algorithms != "auto":
             return deepcopy(self.algorithms)
+
+        if self._get_mode() == "Explain":
+            return [
+                "Baseline",
+                "Linear",
+                "Decision Tree",
+                "Random Forest",
+                "Xgboost",
+                "Neural Network",
+            ]
+        if self._get_mode() == "Perform":
+            return [
+                "Linear",
+                "Random Forest",
+                "LightGBM",
+                "Xgboost",
+                "CatBoost",
+                "Neural Network",
+            ]
+        if self._get_mode() == "Compete":
+            return [
+                "Linear",
+                "Decision Tree",
+                "Random Forest",
+                "Extra Trees",
+                "LightGBM",
+                "Xgboost",
+                "CatBoost",
+                "Neural Network",
+                "Nearest Neighbors",
+            ]
 
     def _get_train_ensemble(self):
         """ Gets the current train_ensemble"""
@@ -1019,22 +1019,22 @@ class BaseAutoML(BaseEstimator, ABC):
         """ Gets the current stack_models"""
         self._validate_stack_models()
         if self.stack_models == "auto":
-            return True if self.mode == "Compete" else False
+            return self.mode == "Compete"
         else:
             return deepcopy(self.stack_models)
 
     def _get_eval_metric(self):
         """ Gets the current eval_metric"""
         self._validate_eval_metric()
-        if self.eval_metric == "auto":
-            if self._get_ml_task() == BINARY_CLASSIFICATION:
-                return "logloss"
-            elif self._get_ml_task() == MULTICLASS_CLASSIFICATION:
-                return "logloss"
-            elif self._get_ml_task() == REGRESSION:
-                return "rmse"
-        else:
+        if self.eval_metric != "auto":
             return deepcopy(self.eval_metric)
+
+        if self._get_ml_task() == BINARY_CLASSIFICATION:
+            return "logloss"
+        elif self._get_ml_task() == MULTICLASS_CLASSIFICATION:
+            return "logloss"
+        elif self._get_ml_task() == REGRESSION:
+            return "rmse"
 
     def _get_validation_strategy(self):
         """ Gets the current validation_strategy"""
@@ -1062,17 +1062,16 @@ class BaseAutoML(BaseEstimator, ABC):
                     "shuffle": True,
                     "stratify": True,
                 }
-            if self._get_ml_task() == REGRESSION:
-                if "stratify" in strat:
-                    # it's better to always check
-                    # before delete (trust me)
-                    del strat["stratify"]
-            return strat
+            if self._get_ml_task() == REGRESSION and "stratify" in strat:
+                # it's better to always check
+                # before delete (trust me)
+                del strat["stratify"]
         else:
             strat = deepcopy(self.validation_strategy)
             if "stratify" in strat:
                 del strat["stratify"]
-            return strat
+
+        return strat
 
     def _get_verbose(self):
         """Gets the current verbose"""
@@ -1082,79 +1081,79 @@ class BaseAutoML(BaseEstimator, ABC):
     def _get_explain_level(self):
         """ Gets the current explain_level"""
         self._validate_explain_level()
-        if self.explain_level == "auto":
-            if self._get_mode() == "Explain":
-                return 2
-            if self._get_mode() == "Perform":
-                return 1
-            if self._get_mode() == "Compete":
-                return 0
-        else:
+        if self.explain_level != "auto":
             return deepcopy(self.explain_level)
+
+        if self._get_mode() == "Explain":
+            return 2
+        if self._get_mode() == "Perform":
+            return 1
+        if self._get_mode() == "Compete":
+            return 0
 
     def _get_golden_features(self):
         self._validate_golden_features()
-        if self.golden_features == "auto":
-            if self._get_mode() == "Explain":
-                return False
-            if self._get_mode() == "Perform":
-                return True
-            if self._get_mode() == "Compete":
-                return True
-        else:
+        if self.golden_features != "auto":
             return deepcopy(self.golden_features)
+
+        if self._get_mode() == "Explain":
+            return False
+        if self._get_mode() == "Perform":
+            return True
+        if self._get_mode() == "Compete":
+            return True
 
     def _get_features_selection(self):
         """ Gets the current features_selection"""
         self._validate_features_selection()
-        if self.features_selection == "auto":
-            if self._get_mode() == "Explain":
-                return False
-            if self._get_mode() == "Perform":
-                return True
-            if self._get_mode() == "Compete":
-                return True
-        else:
+        if self.features_selection != "auto":
             return deepcopy(self.features_selection)
+
+        if self._get_mode() == "Explain":
+            return False
+        if self._get_mode() == "Perform":
+            return True
+        if self._get_mode() == "Compete":
+            return True
 
     def _get_start_random_models(self):
         """ Gets the current start_random_models"""
         self._validate_start_random_models()
-        if self.start_random_models == "auto":
-            if self._get_mode() == "Explain":
-                return 1
-            if self._get_mode() == "Perform":
-                return 5
-            if self._get_mode() == "Compete":
-                return 10
-        else:
+        if self.start_random_models != "auto":
             return deepcopy(self.start_random_models)
+
+        if self._get_mode() == "Explain":
+            return 1
+        if self._get_mode() == "Perform":
+            return 5
+        if self._get_mode() == "Compete":
+            return 10
 
     def _get_hill_climbing_steps(self):
         """ Gets the current hill_climbing_steps"""
         self._validate_hill_climbing_steps()
-        if self.hill_climbing_steps == "auto":
-            if self._get_mode() == "Explain":
-                return 0
-            if self._get_mode() == "Perform":
-                return 2
-            if self._get_mode() == "Compete":
-                return 2
-        else:
+        if self.hill_climbing_steps != "auto":
             return deepcopy(self.hill_climbing_steps)
+
+        if self._get_mode() == "Explain":
+            return 0
+        if self._get_mode() == "Perform":
+            return 2
+        if self._get_mode() == "Compete":
+            return 2
 
     def _get_top_models_to_improve(self):
         """ Gets the current top_models_to_improve"""
         self._validate_top_models_to_improve()
-        if self.top_models_to_improve == "auto":
-            if self._get_mode() == "Explain":
-                return 0
-            if self._get_mode() == "Perform":
-                return 2
-            if self._get_mode() == "Compete":
-                return 3
-        else:
+        if self.top_models_to_improve != "auto":
             return deepcopy(self.top_models_to_improve)
+
+        if self._get_mode() == "Explain":
+            return 0
+        if self._get_mode() == "Perform":
+            return 2
+        if self._get_mode() == "Compete":
+            return 3
 
     def _get_random_state(self):
         """ Gets the current random_state"""
@@ -1228,9 +1227,10 @@ class BaseAutoML(BaseEstimator, ABC):
             return
 
         if (
-            self._get_ml_task() == BINARY_CLASSIFICATION
-            or self._get_ml_task() == MULTICLASS_CLASSIFICATION
-        ) and self.eval_metric != "logloss":
+            self._get_ml_task()
+            in [BINARY_CLASSIFICATION, MULTICLASS_CLASSIFICATION]
+            and self.eval_metric != "logloss"
+        ):
             raise ValueError(
                 f"Metric {self.eval_metric} is not allowed in ML task: {self._get_ml_task()}. \
                     Use 'log_loss'"
@@ -1258,7 +1258,7 @@ class BaseAutoML(BaseEstimator, ABC):
             raise ValueError(
                 f"Expected 'validation_strategy' to be a dict, got '{type(self.validation_strategy)}'"
             )
-        if not all(key in self.validation_strategy for key in required_keys):
+        if any(key not in self.validation_strategy for key in required_keys):
             raise ValueError(f"Expected dict with keys: {' , '.join(required_keys)}")
 
     def _validate_verbose(self):
@@ -1339,10 +1339,9 @@ class BaseAutoML(BaseEstimator, ABC):
 
         if json_data["best_model"]["algorithm_short_name"] == "Ensemble":
             self._best_model = Ensemble()
-            self._best_model.from_json(json_data["best_model"])
         else:
             self._best_model = ModelFramework(json_data["best_model"].get("params"))
-            self._best_model.from_json(json_data["best_model"])
+        self._best_model.from_json(json_data["best_model"])
         self._threshold = json_data.get("threshold")
 
         self._ml_task = json_data.get("ml_task")
