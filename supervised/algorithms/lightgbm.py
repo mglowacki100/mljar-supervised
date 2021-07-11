@@ -119,14 +119,13 @@ class LightgbmAlgorithm(BaseAlgorithm):
         self.model = lgb.Booster(model_file=model_file_path)
 
     def get_params(self):
-        json_desc = {
+        return {
             "library_version": self.library_version,
             "algorithm_name": self.algorithm_name,
             "algorithm_short_name": self.algorithm_short_name,
             "uid": self.uid,
             "params": self.params,
         }
-        return json_desc
 
     def set_params(self, json_desc):
         self.library_version = json_desc.get("library_version", self.library_version)

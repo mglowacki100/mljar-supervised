@@ -73,11 +73,7 @@ class AdditionalMetrics:
             details["accuracy"] += [accuracy_score(target, response)]
             details["precision"] += [precision_score(target, response)]
             details["recall"] += [recall_score(target, response)]
-            if i == 0:
-                details["mcc"] += [0.0]
-            else:
-                details["mcc"] += [matthews_corrcoef(target, response)]
-
+            details["mcc"] += [0.0] if i == 0 else [matthews_corrcoef(target, response)]
         # max metrics
         max_metrics = {
             "logloss": {
@@ -178,9 +174,9 @@ class AdditionalMetrics:
             "RMSE": lambda t, p: np.sqrt(mean_squared_error(t, p)),
             "R2": r2_score,
         }
-        max_metrics = {}
-        for k, v in regression_metrics.items():
-            max_metrics[k] = v(target, predictions)
+        max_metrics = {
+            k: v(target, predictions) for k, v in regression_metrics.items()
+        }
 
         return {
             "max_metrics": pd.DataFrame(

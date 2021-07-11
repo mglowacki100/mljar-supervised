@@ -49,7 +49,7 @@ class HillClimbing:
             if v == params[key_to_update]:
                 if i + 1 < len(values):
                     right = values[i + 1]
-                if i - 1 >= 0:
+                if i >= 1:
                     left = values[i - 1]
 
         params_1, params_2 = None, None

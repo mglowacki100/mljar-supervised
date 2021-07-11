@@ -92,13 +92,12 @@ class DateTimeTransformer(object):
         return X
 
     def to_json(self):
-        data_json = {
+        return {
             "new_columns": list(self._new_columns),
             "old_column": self._old_column,
             "min_datetime": str(self._min_datetime),
             "transforms": list(self._transforms),
         }
-        return data_json
 
     def from_json(self, data_json):
         self._new_columns = data_json.get("new_columns", None)

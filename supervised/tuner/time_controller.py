@@ -51,7 +51,6 @@ class TimeController:
             return tc
         except Exception as e:
             logger.error(f"Cant load TimeController from json, {str(e)}")
-            pass
         return None
 
     def already_spend(self):

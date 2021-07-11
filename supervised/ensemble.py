@@ -257,14 +257,13 @@ class Ensemble:
             repeat = selected["repeat"]
             models_json += [{"model": model.to_json(), "repeat": repeat}]
 
-        json_desc = {
+        return {
             "library_version": self.library_version,
             "algorithm_name": self.algorithm_name,
             "algorithm_short_name": self.algorithm_short_name,
             "uid": self.uid,
             "models": models_json,
         }
-        return json_desc
 
     def from_json(self, json_desc):
         self.library_version = json_desc.get("library_version", self.library_version)
@@ -294,9 +293,10 @@ class Ensemble:
         predictions.to_csv(predictions_fname, index=False)
 
         with open(os.path.join(model_path, "ensemble.json"), "w") as fout:
-            ms = []
-            for selected in self.selected_models:
-                ms += [{"model": selected["model"]._name, "repeat": selected["repeat"]}]
+            ms = [
+                {"model": selected["model"]._name, "repeat": selected["repeat"]}
+                for selected in self.selected_models
+            ]
 
             desc = {
                 "name": self._name,

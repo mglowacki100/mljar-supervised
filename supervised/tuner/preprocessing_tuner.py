@@ -66,12 +66,13 @@ class PreprocessingTuner:
             ):
                 preprocessing_to_apply += ["text_transform"]
 
-            if "scale" in required_preprocessing:
-                if (
+            if "scale" in required_preprocessing and (
+                (
                     convert_to_integer_will_be_applied
                     or "scale" in preprocessing_needed
-                ):
-                    preprocessing_to_apply += [Scale.SCALE_NORMAL]
+                )
+            ):
+                preprocessing_to_apply += [Scale.SCALE_NORMAL]
 
             # remeber which preprocessing we need to apply
             if preprocessing_to_apply:
@@ -84,9 +85,11 @@ class PreprocessingTuner:
         target_preprocessing += [PreprocessingMissingValues.NA_EXCLUDE]
 
         if "target_as_integer" in required_preprocessing:
-            if machinelearning_task == BINARY_CLASSIFICATION:
-                if "convert_0_1" in target_info:
-                    target_preprocessing += [PreprocessingCategorical.CONVERT_INTEGER]
+            if (
+                machinelearning_task == BINARY_CLASSIFICATION
+                and "convert_0_1" in target_info
+            ):
+                target_preprocessing += [PreprocessingCategorical.CONVERT_INTEGER]
 
             if machinelearning_task == MULTICLASS_CLASSIFICATION:
                 # if PreprocessingUtils.is_categorical(y):

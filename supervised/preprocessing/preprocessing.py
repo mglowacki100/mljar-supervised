@@ -280,31 +280,43 @@ class Preprocessing(object):
                 X_validation, y_validation
             )
 
-            if PreprocessingCategorical.CONVERT_INTEGER in target_preprocessing:
-                if y_validation is not None and self._categorical_y is not None:
-                    y_validation = pd.Series(
-                        self._categorical_y.transform(y_validation)
-                    )
+        if (
+            PreprocessingCategorical.CONVERT_INTEGER in target_preprocessing
+            and y_validation is not None
+            and self._categorical_y is not None
+        ):
+            y_validation = pd.Series(
+                self._categorical_y.transform(y_validation)
+            )
 
-            if PreprocessingCategorical.CONVERT_ONE_HOT in target_preprocessing:
-                if y_validation is not None and self._categorical_y is not None:
-                    y_validation = self._categorical_y.transform(
-                        pd.DataFrame({"target": y_validation}), "target"
-                    )
+        if (
+            PreprocessingCategorical.CONVERT_ONE_HOT in target_preprocessing
+            and y_validation is not None
+            and self._categorical_y is not None
+        ):
+            y_validation = self._categorical_y.transform(
+                pd.DataFrame({"target": y_validation}), "target"
+            )
 
-            if Scale.SCALE_LOG_AND_NORMAL in target_preprocessing:
-                if self._scale_y is not None and y_validation is not None:
-                    logger.debug("Transform log and normalize")
-                    y_validation = pd.DataFrame({"target": y_validation})
-                    y_validation = self._scale_y.transform(y_validation)
-                    y_validation = y_validation["target"]
+        if (
+            Scale.SCALE_LOG_AND_NORMAL in target_preprocessing
+            and self._scale_y is not None
+            and y_validation is not None
+        ):
+            logger.debug("Transform log and normalize")
+            y_validation = pd.DataFrame({"target": y_validation})
+            y_validation = self._scale_y.transform(y_validation)
+            y_validation = y_validation["target"]
 
-            if Scale.SCALE_NORMAL in target_preprocessing:
-                if self._scale_y is not None and y_validation is not None:
-                    logger.debug("Transform normalize")
-                    y_validation = pd.DataFrame({"target": y_validation})
-                    y_validation = self._scale_y.transform(y_validation)
-                    y_validation = y_validation["target"]
+        if (
+            Scale.SCALE_NORMAL in target_preprocessing
+            and self._scale_y is not None
+            and y_validation is not None
+        ):
+            logger.debug("Transform normalize")
+            y_validation = pd.DataFrame({"target": y_validation})
+            y_validation = self._scale_y.transform(y_validation)
+            y_validation = y_validation["target"]
 
         # columns preprocessing
         if len(self._remove_columns) and X_validation is not None:
@@ -402,9 +414,7 @@ class Preprocessing(object):
                 # multiclass classification
                 # logger.debug(self._categorical_y.to_json())
                 if "unique_values" not in self._categorical_y.to_json():
-                    labels = dict(
-                        (v, k) for k, v in self._categorical_y.to_json().items()
-                    )
+                    labels = {v: k for k, v in self._categorical_y.to_json().items()}
                 else:
                     labels = {
                         i: v
@@ -415,10 +425,11 @@ class Preprocessing(object):
 
                 return list(labels.values())
 
-        else:  # self._categorical_y is None
-            if "ml_task" in self._params:
-                if self._params["ml_task"] == BINARY_CLASSIFICATION:
-                    return ["0", "1"]
+        elif (
+            "ml_task" in self._params
+            and self._params["ml_task"] == BINARY_CLASSIFICATION
+        ):
+            return ["0", "1"]
         return []
 
     def prepare_target_labels(self, y):
@@ -443,9 +454,7 @@ class Preprocessing(object):
                 # multiclass classification
 
                 if "unique_values" not in self._categorical_y.to_json():
-                    labels = dict(
-                        (v, k) for k, v in self._categorical_y.to_json().items()
-                    )
+                    labels = {v: k for k, v in self._categorical_y.to_json().items()}
                 else:
                     labels = {
                         i: v
@@ -464,15 +473,14 @@ class Preprocessing(object):
                 df["label"] = df["label"].map(labels)
 
                 return df
-        else:  # self._categorical_y is None
-            if "ml_task" in self._params:
-                if self._params["ml_task"] == BINARY_CLASSIFICATION:
-                    return pd.DataFrame({"prediction_0": 1 - y, "prediction_1": y})
-                elif self._params["ml_task"] == MULTICLASS_CLASSIFICATION:
-                    return pd.DataFrame(
-                        data=y,
-                        columns=["prediction_{}".format(i) for i in range(y.shape[1])],
-                    )
+        elif "ml_task" in self._params:
+            if self._params["ml_task"] == BINARY_CLASSIFICATION:
+                return pd.DataFrame({"prediction_0": 1 - y, "prediction_1": y})
+            elif self._params["ml_task"] == MULTICLASS_CLASSIFICATION:
+                return pd.DataFrame(
+                    data=y,
+                    columns=["prediction_{}".format(i) for i in range(y.shape[1])],
+                )
 
         return pd.DataFrame({"prediction": y})
 
@@ -481,31 +489,21 @@ class Preprocessing(object):
         if self._remove_columns:
             preprocessing_params["remove_columns"] = self._remove_columns
         if self._missing_values is not None and len(self._missing_values):
-            mvs = []  # refactor
-            for mv in self._missing_values:
-                if mv.to_json():
-                    mvs += [mv.to_json()]
+            mvs = [mv.to_json() for mv in self._missing_values if mv.to_json()]
             if mvs:
                 preprocessing_params["missing_values"] = mvs
         if self._categorical is not None and len(self._categorical):
-            cats = []  # refactor
-            for cat in self._categorical:
-                if cat.to_json():
-                    cats += [cat.to_json()]
+            cats = [cat.to_json() for cat in self._categorical if cat.to_json()]
             if cats:
                 preprocessing_params["categorical"] = cats
 
         if self._datetime_transforms is not None and len(self._datetime_transforms):
-            dtts = []
-            for dtt in self._datetime_transforms:
-                dtts += [dtt.to_json()]
+            dtts = [dtt.to_json() for dtt in self._datetime_transforms]
             if dtts:
                 preprocessing_params["datetime_transforms"] = dtts
 
         if self._text_transforms is not None and len(self._text_transforms):
-            tts = []
-            for tt in self._text_transforms:
-                tts += [tt.to_json()]
+            tts = [tt.to_json() for tt in self._text_transforms]
             if tts:
                 preprocessing_params["text_transforms"] = tts
 

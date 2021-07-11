@@ -271,11 +271,9 @@ class ModelFramework:
 
         y_predicted_average = y_predicted / float(len(self.learners))
 
-        y_predicted_final = self.preprocessings[0].prepare_target_labels(
+        return self.preprocessings[0].prepare_target_labels(
             y_predicted_average
         )
-
-        return y_predicted_final
 
     def get_additional_metrics(self):
         if self._additional_metrics is None:

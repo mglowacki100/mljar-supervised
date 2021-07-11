@@ -34,13 +34,14 @@ class LearnerTimeConstraint(Callback):
             )
         )
 
-        if self.min_steps is not None:
-            if self.iterations_count < self.min_steps:
-                # self.learner.stop_training = False
-                # return before checking other conditions
-                return
+        if self.min_steps is not None and self.iterations_count < self.min_steps:
+            # self.learner.stop_training = False
+            # return before checking other conditions
+            return
 
-        if self.learner_time_limit is not None:
-            if learner_elapsed_time >= self.learner_time_limit:
-                self.learner.stop_training = True
-                log.info("Terminating learning, time limit reached")
+        if (
+            self.learner_time_limit is not None
+            and learner_elapsed_time >= self.learner_time_limit
+        ):
+            self.learner.stop_training = True
+            log.info("Terminating learning, time limit reached")
